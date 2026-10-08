@@ -23,3 +23,12 @@ Trade off. Higher latency for users in South America than a region there.
 ## D6. Configuration with pydantic settings
 Why. Config comes from environment variables and is validated at startup, so a missing API key fails fast instead of on the first request. The key is a SecretStr so it never leaks into logs. LLM_MODEL defaults to the pinned snapshot claude-haiku-4-5-20251001 because it is not a secret and a safe default avoids setting it in every environment.
 Trade off. A pinned snapshot does not pick up newer models on its own. Changing it is a config change, not a code change.
+
+## D7. Forced tool use depends on the model
+Why. D2 relies on forced tool_choice. Per Anthropic's model docs, Claude Fable 5.1, Opus 5.5 and Sonnet 5.5 reject tool_choice "tool" and "any" with a 400. Haiku 4.5, the default, accepts it (so does Haiku 5.5), so the design stays.
+Alternative. On those models, use tool_choice "auto" with the tool named in the prompt and strict: true on the tool, then check that the call was made and retry if not. Or use structured outputs (output_config.format), since the forced call only exists to get JSON back. Pydantic validation and the retry stay the same.
+Trade off. For those models, changing LLM_MODEL is not only a config change as D6 suggests. llm.py has to change too.
+
+## D8. Provider error mapping
+Why. Timeouts, connection errors, 429 and 5xx from the provider are transient, so they map to 503 and the client can retry later. Any other 4xx (bad request, invalid key, unknown model) is a bug or misconfiguration on our side that a retry will not fix, so it maps to 500 and is logged with the status code and the provider request id. An invalid LLM answer still maps to 502.
+Trade off. The client only sees a generic 500. The detail lives in the logs.
