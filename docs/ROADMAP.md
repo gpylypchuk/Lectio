@@ -3,19 +3,19 @@
 ## Current status
 | Field | Value |
 |---|---|
-| Current phase | 0 Setup |
-| Last step done | Folder structure, Python tooling and context files |
-| Next step | First commit |
+| Current phase | 1 Local backend (in progress) |
+| Last step done | app/config.py with pydantic settings |
+| Next step | app/schemas.py with AnalysisRequest, PaperSummary and AnalysisResult |
 | Blockers | None |
 
-## Phase 0. Setup
+## Phase 0. Setup (done)
 * [x] Folder structure and Python tooling
 * [x] CLAUDE.md, docs and Claude Code commands
-* [ ] First commit
+* [x] First commit
 Done when ruff, mypy and pytest run cleanly on the empty project.
 
 ## Phase 1. Local backend
-* [ ] app/config.py with pydantic settings
+* [x] app/config.py with pydantic settings
 * [ ] app/schemas.py with AnalysisRequest, PaperSummary (with a business rule in a model_validator) and AnalysisResult
 * [ ] app/llm.py with forced tool use, Pydantic validation and one retry that feeds the error back to the model
 * [ ] app/main.py with lifespan, /healthz and POST /v1/analyses returning 422, 502 and 503 as appropriate

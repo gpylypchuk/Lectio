@@ -19,3 +19,7 @@ Trade off. Less fine-grained control and stateless services only.
 ## D5. us-central1 region
 Why. All the services are available and prices are low. Latency is not critical.
 Trade off. Higher latency for users in South America than a region there.
+
+## D6. Configuration with pydantic settings
+Why. Config comes from environment variables and is validated at startup, so a missing API key fails fast instead of on the first request. The key is a SecretStr so it never leaks into logs. LLM_MODEL defaults to the pinned snapshot claude-haiku-4-5-20251001 because it is not a secret and a safe default avoids setting it in every environment.
+Trade off. A pinned snapshot does not pick up newer models on its own. Changing it is a config change, not a code change.
