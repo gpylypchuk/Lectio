@@ -4,8 +4,8 @@
 | Field | Value |
 |---|---|
 | Current phase | 1 Local backend (in progress) |
-| Last step done | app/config.py with pydantic settings |
-| Next step | app/schemas.py with AnalysisRequest, PaperSummary and AnalysisResult |
+| Last step done | app/schemas.py and tests/test_schemas.py |
+| Next step | app/llm.py with forced tool use, validation, one retry and the D8 error mapping |
 | Blockers | None |
 
 ## Phase 0. Setup (done)
@@ -16,7 +16,7 @@ Done when ruff, mypy and pytest run cleanly on the empty project.
 
 ## Phase 1. Local backend
 * [x] app/config.py with pydantic settings
-* [ ] app/schemas.py with AnalysisRequest, PaperSummary (with a business rule in a model_validator) and AnalysisResult
+* [x] app/schemas.py with AnalysisRequest, PaperSummary (with a business rule in a model_validator) and AnalysisResult
 * [ ] app/llm.py with forced tool use, Pydantic validation and one retry that feeds the error back to the model
 * [ ] app/main.py with lifespan, /healthz and POST /v1/analyses returning 422, 502 and 503 as appropriate
 * [ ] Endpoint tests with a fake LLM via dependency_overrides, and tests for the retry logic

@@ -32,3 +32,11 @@ Trade off. For those models, changing LLM_MODEL is not only a config change as D
 ## D8. Provider error mapping
 Why. Timeouts, connection errors, 429 and 5xx from the provider are transient, so they map to 503 and the client can retry later. Any other 4xx (bad request, invalid key, unknown model) is a bug or misconfiguration on our side that a retry will not fix, so it maps to 500 and is logged with the status code and the provider request id. An invalid LLM answer still maps to 502.
 Trade off. The client only sees a generic 500. The detail lives in the logs.
+
+## D9. Text length limits
+Why. AnalysisRequest.text accepts 500 to 100,000 characters after trimming surrounding whitespace. The maximum is roughly 25,000 tokens, which caps cost (about $0.025 of input per call with Haiku 4.5) and the latency of a synchronous request (D3), well within the model context. The minimum rejects inputs that cannot be a paper before paying for a call.
+Trade off. Longer papers get a 422. Supporting them would need chunking or the async path.
+
+## D10. Every rule on LLM output must be satisfiable without inventing data
+Why. A rule that can only pass by adding content pushes the model to make it up, and the retry reinforces it. Every rule needs an honest way out. That is why title is nullable, limitations can be empty, and the only cross-field rule caps confidence: it cannot be high without a title and at least two key findings, and the honest fix is to lower it. The rule is also stated in the field description so the model usually gets it right on the first attempt. Rejected: "empirical requires at least one limitation", which invites invented limitations.
+Trade off. Clients must handle a null title and more low or medium confidence answers.
