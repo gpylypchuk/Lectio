@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "defaultMode": "default",
+    "allow": [
+      "Bash(pytest *)",
+      "Bash(ruff *)",
+      "Bash(mypy *)",
+      "Bash(.venv/bin/pytest *)",
+      "Bash(.venv/bin/ruff *)",
+      "Bash(.venv/bin/mypy *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)"
+    ],
+    "ask": [
+      "Bash(gcloud *)"
+    ],
+    "deny": [
+      "Read(**/.env)"
+    ]
+  }
+}
