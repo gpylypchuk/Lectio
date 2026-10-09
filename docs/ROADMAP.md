@@ -3,9 +3,9 @@
 ## Current status
 | Field | Value |
 |---|---|
-| Current phase | 4 CI (in progress) |
-| Last step done | CI workflow with ruff, mypy and pytest, no secrets needed |
-| Next step | Push and check that CI is green |
+| Current phase | 5 Optional (minimal frontend) |
+| Last step done | CI green on GitHub. Local React frontend with txt and PDF upload |
+| Next step | Rename /healthz, Cloud Deploy rollback, then Workload Identity Federation |
 | Blockers | None |
 
 ## Phase 0. Setup (done)
@@ -42,13 +42,14 @@ Done when the public URL responds and every command and flag used can be explain
 * [ ] Rollback. Deferred, it needs a second release on prod
 Done when a new version reaches prod only through promotion and approval.
 
-## Phase 4. CI
+## Phase 4. CI (done)
 * [x] .github/workflows/ci.yml running ruff, mypy and pytest on every push and PR
 * [ ] Optional. Automatic build and release authenticating with Workload Identity Federation
 Done when CI is green.
 
 ## Phase 5. Optional
 Only once everything above is done. A minimal React frontend, or async processing with Pub/Sub.
+* [x] Local React frontend in frontend/. Vite proxies /v1 to port 8080, and PDF text is extracted in the browser with pdf.js
 
 ## Out of scope
 Cloud SQL, Pub/Sub with a worker and Terraform. See `docs/ARCHITECTURE.md` for how they would fit.

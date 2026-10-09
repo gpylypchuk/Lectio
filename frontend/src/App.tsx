@@ -1,0 +1,160 @@
+import { useState, type DragEvent } from "react";
+import "./styles.css";
+
+// Mirrors PaperSummary and AnalysisResult in backend/app/schemas.py.
+type PaperSummary = {
+  title: string | null;
+  tldr: string;
+  study_type: "empirical" | "theoretical" | "review";
+  key_findings: string[];
+  limitations: string[];
+  confidence: "low" | "medium" | "high";
+};
+
+type AnalysisResult = {
+  summary: PaperSummary;
+  model: string;
+};
+
+// Same limits as AnalysisRequest.text, so the button never sends a request that would get a 422.
+const MIN_LENGTH = 500;
+const MAX_LENGTH = 100_000;
+
+export default function App() {
+  const [text, setText] = useState("");
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const lengthOk = text.length >= MIN_LENGTH && text.length <= MAX_LENGTH;
+
+  async function loadFile(file: File | undefined) {
+    if (!file) return;
+    setError(null);
+    setFileName(file.name);
+    try {
+      const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+      // pdf.js is large, so it is only downloaded when a PDF is actually chosen.
+      const content = isPdf ? await (await import("./pdf")).extractPdfText(file) : await file.text();
+      if (!content) setError("No text found in the file. A scanned PDF would need OCR.");
+      setText(content);
+    } catch {
+      setError("Could not read the file.");
+    }
+  }
+
+  function onDrop(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    setDragging(false);
+    loadFile(event.dataTransfer.files[0]);
+  }
+
+  async function analyze() {
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      const response = await fetch("/v1/analyses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        // 502 and 503 send a string, 422 sends a list of validation errors.
+        const detail = typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail);
+        setError(`HTTP ${response.status}: ${detail}`);
+        return;
+      }
+      setResult(body as AnalysisResult);
+    } catch {
+      setError("Could not reach the API. Is something listening on port 8080?");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="page">
+      <header className="masthead">
+        <h1>Lectio</h1>
+        <p>Read less. Understand more.</p>
+      </header>
+
+      <label
+        className={dragging ? "dropzone dragging" : "dropzone"}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+      >
+        <input type="file" accept=".txt,.pdf" onChange={(event) => loadFile(event.target.files?.[0])} />
+        {fileName ? (
+          <span>
+            <strong>{fileName}</strong> loaded. Drop or click to choose another file
+          </span>
+        ) : (
+          <span>
+            Drop a <strong>.pdf</strong> or <strong>.txt</strong> here, or click to choose a file
+          </span>
+        )}
+      </label>
+
+      <textarea
+        value={text}
+        onChange={(event) => setText(event.target.value)}
+        placeholder="Or paste the text of a paper"
+      />
+
+      <div className="actions">
+        <span className={text && !lengthOk ? "count invalid" : "count"}>
+          {text.length.toLocaleString()} / {MAX_LENGTH.toLocaleString()} characters · minimum {MIN_LENGTH}
+        </span>
+        <button onClick={analyze} disabled={loading || !lengthOk}>
+          {loading ? "Analyzing…" : "Analyze"}
+        </button>
+      </div>
+
+      {error && <p className="error">{error}</p>}
+      {result && <Summary result={result} />}
+    </main>
+  );
+}
+
+function Summary({ result }: { result: AnalysisResult }) {
+  const { summary } = result;
+  return (
+    <article className="summary">
+      <h2>{summary.title ?? "Untitled paper"}</h2>
+      <div className="chips">
+        <span className="chip">{summary.study_type}</span>
+        <span className={`chip ${summary.confidence}`}>{summary.confidence} confidence</span>
+      </div>
+      <p className="tldr">{summary.tldr}</p>
+
+      <h3>Key findings</h3>
+      <ul>
+        {summary.key_findings.map((finding, i) => (
+          <li key={i}>{finding}</li>
+        ))}
+      </ul>
+
+      {summary.limitations.length > 0 && (
+        <>
+          <h3>Limitations</h3>
+          <ul className="limitations">
+            {summary.limitations.map((limitation, i) => (
+              <li key={i}>{limitation}</li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      <p className="model">Generated by {result.model}</p>
+    </article>
+  );
+}

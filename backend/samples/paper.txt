@@ -1,0 +1,11 @@
+Afternoon Naps and Word List Recall in Healthy Adults
+
+Abstract. We tested whether a 30-minute afternoon nap improves recall of newly learned word lists.
+
+Methods. 120 healthy adults aged 20 to 45 learned two lists of 40 words at 1 pm. Participants were randomly assigned to a nap group (n = 60), which slept for 30 minutes in a quiet room, or a wake group (n = 60), which watched a nature documentary. Recall was tested at 4 pm and again the next morning.
+
+Results. The nap group recalled 20% more words than the wake group at 4 pm (p < 0.01). The advantage persisted the next morning at 14% (p < 0.05). The effect was larger for concrete nouns than for abstract nouns.
+
+Limitations. Sleep was not monitored with polysomnography, so we cannot tell which sleep stages drove the effect. All participants were university staff, which limits generalization.
+
+Conclusion. A short afternoon nap improves recall of new verbal material for at least one day.
