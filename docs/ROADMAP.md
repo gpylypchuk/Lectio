@@ -3,9 +3,9 @@
 ## Current status
 | Field | Value |
 |---|---|
-| Current phase | 2 GCP by hand (done except the /healthz rename) |
-| Last step done | Revision 00002 tagged candidate, 50/50 split and rollback to 00001 |
-| Next step | Rename /healthz to /health, then Phase 3 Cloud Deploy |
+| Current phase | 3 Cloud Deploy (done except the hands-on rollback) |
+| Last step done | rel-001 rolled out to dev, promoted and approved to prod, both return 200 |
+| Next step | Phase 4 CI workflow |
 | Blockers | None |
 
 ## Phase 0. Setup (done)
@@ -36,10 +36,10 @@ Done when a local curl returns a real summary, the tests pass and the image runs
 Done when the public URL responds and every command and flag used can be explained.
 
 ## Phase 3. Cloud Deploy
-* [ ] deploy/skaffold.yaml and deploy/service.yaml
-* [ ] deploy/clouddeploy.yaml with a dev and prod pipeline, prod requiring approval
-* [ ] Create a release, watch the rollout in dev, promote to prod and approve
-* [ ] Rollback
+* [x] deploy/skaffold.yaml and deploy/service.yaml
+* [x] deploy/clouddeploy.yaml with a dev and prod pipeline, prod requiring approval
+* [x] Create a release, watch the rollout in dev, promote to prod and approve
+* [ ] Rollback. Deferred, it needs a second release on prod
 Done when a new version reaches prod only through promotion and approval.
 
 ## Phase 4. CI

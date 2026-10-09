@@ -64,3 +64,7 @@ Trade off. Each build uploads the source and waits for a remote worker, which is
 ## D16. Private service with least privilege and a cost cap
 Why. Every request spends API credits, so the service is deployed with --no-allow-unauthenticated and only identities with run.invoker can call it. It runs as a dedicated service account whose only permission is secretAccessor on the one secret, bound on the secret and not on the project. The secret is pinned to a version, so rotating the key is an explicit deploy that creates a new revision. --max-instances 1 caps the cost.
 Trade off. Callers need an identity token, so a public frontend would need an authenticated layer in front. One instance limits throughput to what a single container can serve.
+
+## D17. Cloud Deploy pipeline from dev to prod
+Why. A release is immutable: the image is pinned by digest and the manifests are rendered once, so prod runs exactly what ran in dev. One Knative manifest serves both targets, with the service name set per target through a deploy parameter. Prod requires approval, which separates the permission to deploy from the permission to approve. The Phase 2 service lectio-api stays outside the pipeline as a fallback.
+Trade off. Dev and prod share one project, and Cloud Deploy runs as the Compute Engine default service account, which has Editor. A real setup would use one project per environment and a dedicated execution service account for the pipeline.

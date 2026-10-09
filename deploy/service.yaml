@@ -1,0 +1,20 @@
+# Rendered by Skaffold and deployed by Cloud Deploy. Each target sets its own service name.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: lectio # from-param: ${service_name}
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: "1"
+    spec:
+      serviceAccountName: lectio-run@lectio-gero-2026.iam.gserviceaccount.com
+      containers:
+        - image: api
+          env:
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: anthropic-api-key
+                  key: "1"

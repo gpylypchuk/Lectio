@@ -1,0 +1,10 @@
+# Tells Cloud Deploy which manifest to render and that the target platform is Cloud Run.
+apiVersion: skaffold/v4beta7
+kind: Config
+metadata:
+  name: lectio
+manifests:
+  rawYaml:
+    - service.yaml
+deploy:
+  cloudrun: {}

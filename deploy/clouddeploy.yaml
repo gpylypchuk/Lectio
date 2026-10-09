@@ -1,0 +1,31 @@
+# Promotion path dev -> prod. Prod requires a manual approval before any rollout.
+apiVersion: deploy.cloud.google.com/v1
+kind: DeliveryPipeline
+metadata:
+  name: lectio
+description: Lectio API from dev to prod
+serialPipeline:
+  stages:
+    - targetId: dev
+    - targetId: prod
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: dev
+description: Development
+run:
+  location: projects/lectio-gero-2026/locations/us-central1
+deployParameters:
+  service_name: lectio-dev
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: prod
+description: Production
+requireApproval: true
+run:
+  location: projects/lectio-gero-2026/locations/us-central1
+deployParameters:
+  service_name: lectio-prod
