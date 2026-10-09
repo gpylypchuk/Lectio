@@ -3,9 +3,9 @@
 ## Current status
 | Field | Value |
 |---|---|
-| Current phase | 3 Cloud Deploy (done except the hands-on rollback) |
-| Last step done | rel-001 rolled out to dev, promoted and approved to prod, both return 200 |
-| Next step | Phase 4 CI workflow |
+| Current phase | 4 CI (in progress) |
+| Last step done | CI workflow with ruff, mypy and pytest, no secrets needed |
+| Next step | Push and check that CI is green |
 | Blockers | None |
 
 ## Phase 0. Setup (done)
@@ -43,7 +43,7 @@ Done when the public URL responds and every command and flag used can be explain
 Done when a new version reaches prod only through promotion and approval.
 
 ## Phase 4. CI
-* [ ] .github/workflows/ci.yml running ruff, mypy and pytest on every push and PR
+* [x] .github/workflows/ci.yml running ruff, mypy and pytest on every push and PR
 * [ ] Optional. Automatic build and release authenticating with Workload Identity Federation
 Done when CI is green.
 
