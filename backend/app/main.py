@@ -1,3 +1,5 @@
+import logging
+import math
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -16,7 +18,10 @@ from app.llm import (
     ProviderRequestError,
     ProviderUnavailableError,
 )
+from app.ratelimit import RateLimiter, RateLimitExceededError, client_ip
 from app.schemas import AnalysisRequest, AnalysisResult
+
+logger = logging.getLogger(__name__)
 
 # Long enough for a rate limit or an overload to clear on the provider side (D8).
 RETRY_AFTER_SECONDS = 30
@@ -35,8 +40,14 @@ ERROR_RESPONSES: dict[type[LLMError], tuple[int, str]] = {
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Reading settings here makes a missing API key fail at startup, not on the first request.
-    analyzer = AnthropicAnalyzer(get_settings())
+    settings = get_settings()
+    analyzer = AnthropicAnalyzer(settings)
     app.state.analyzer = analyzer
+    app.state.limiter = RateLimiter(
+        per_client=settings.rate_limit_per_ip,
+        total=settings.rate_limit_total,
+        window_seconds=settings.rate_limit_window_seconds,
+    )
     yield
     await analyzer.aclose()
 
@@ -52,6 +63,14 @@ def get_analyzer(request: Request) -> Analyzer:
 AnalyzerDep = Annotated[Analyzer, Depends(get_analyzer)]
 
 
+def get_limiter(request: Request) -> RateLimiter:
+    limiter: RateLimiter = request.app.state.limiter
+    return limiter
+
+
+LimiterDep = Annotated[RateLimiter, Depends(get_limiter)]
+
+
 @app.exception_handler(LLMError)
 async def llm_error_handler(request: Request, exc: LLMError) -> JSONResponse:
     status_code, detail = ERROR_RESPONSES.get(type(exc), (500, "Internal server error."))
@@ -63,6 +82,18 @@ async def llm_error_handler(request: Request, exc: LLMError) -> JSONResponse:
     return JSONResponse(status_code=status_code, content={"detail": detail}, headers=headers)
 
 
+@app.exception_handler(RateLimitExceededError)
+async def rate_limit_handler(request: Request, exc: RateLimitExceededError) -> JSONResponse:
+    # The client key is logged to check on Cloud Run that X-Forwarded-For is parsed right (D19).
+    logger.warning("Rate limit hit by %s", client_ip(request))
+    minutes = math.ceil(exc.retry_after_seconds / 60)
+    return JSONResponse(
+        status_code=429,
+        content={"detail": f"Too many analyses. Try again in {minutes} min."},
+        headers={"Retry-After": str(exc.retry_after_seconds)},
+    )
+
+
 # Not /healthz: Cloud Run answers it with its own 404 before it reaches the container.
 @app.get("/health")
 async def health() -> dict[str, str]:
@@ -71,7 +102,11 @@ async def health() -> dict[str, str]:
 
 
 @app.post("/v1/analyses")
-async def create_analysis(body: AnalysisRequest, analyzer: AnalyzerDep) -> AnalysisResult:
+async def create_analysis(
+    body: AnalysisRequest, request: Request, analyzer: AnalyzerDep, limiter: LimiterDep
+) -> AnalysisResult:
+    # Counted here, after body validation, so a rejected body does not use up the quota.
+    limiter.hit(client_ip(request))
     return await analyzer.analyze(body.text)
 
 

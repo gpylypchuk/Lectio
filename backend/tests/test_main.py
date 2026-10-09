@@ -12,7 +12,8 @@ from app.llm import (
     ProviderRequestError,
     ProviderUnavailableError,
 )
-from app.main import app, get_analyzer, mount_frontend
+from app.main import app, get_analyzer, get_limiter, mount_frontend
+from app.ratelimit import RateLimiter
 from app.schemas import AnalysisResult, PaperSummary
 
 PAPER = "Sleep and memory. " * 40
@@ -44,6 +45,7 @@ class FakeAnalyzer:
 @pytest.fixture
 def client() -> Iterator[TestClient]:
     # No "with" block, so the real lifespan does not run and no API key is needed.
+    use_limiter(per_client=100, total=100)
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -55,6 +57,11 @@ def frontend(tmp_path: Path) -> Iterator[None]:
     yield
     # The mount is the last route, so popping it restores the app for other tests.
     app.router.routes.pop()
+
+
+def use_limiter(per_client: int, total: int) -> None:
+    limiter = RateLimiter(per_client=per_client, total=total, window_seconds=3600)
+    app.dependency_overrides[get_limiter] = lambda: limiter
 
 
 def use_analyzer(outcome: AnalysisResult | Exception) -> FakeAnalyzer:
@@ -124,6 +131,7 @@ def test_lifespan_creates_and_closes_the_analyzer(monkeypatch: pytest.MonkeyPatc
     try:
         with TestClient(app) as client:
             assert isinstance(app.state.analyzer, AnthropicAnalyzer)
+            assert isinstance(app.state.limiter, RateLimiter)
             assert client.get("/health").status_code == 200
         assert app.state.analyzer._client.is_closed()
     finally:
@@ -144,3 +152,39 @@ def test_frontend_does_not_shadow_the_api(client: TestClient) -> None:
 
     assert client.get("/health").json() == {"status": "ok"}
     assert client.post("/v1/analyses", json={"text": PAPER}).status_code == 200
+
+
+def test_rate_limit_returns_429_with_retry_after(client: TestClient) -> None:
+    fake = use_analyzer(RESULT)
+    use_limiter(per_client=2, total=10)
+
+    statuses = [client.post("/v1/analyses", json={"text": PAPER}).status_code for _ in range(2)]
+    response = client.post("/v1/analyses", json={"text": PAPER})
+
+    assert statuses == [200, 200]
+    assert response.status_code == 429
+    assert response.headers["Retry-After"] == "3600"
+    assert response.json() == {"detail": "Too many analyses. Try again in 60 min."}
+    assert len(fake.texts) == 2
+
+
+def test_rejected_body_does_not_use_quota(client: TestClient) -> None:
+    use_analyzer(RESULT)
+    use_limiter(per_client=1, total=10)
+
+    assert client.post("/v1/analyses", json={"text": "Too short."}).status_code == 422
+    assert client.post("/v1/analyses", json={"text": PAPER}).status_code == 200
+
+
+def test_rate_limit_keys_on_last_forwarded_address(client: TestClient) -> None:
+    use_analyzer(RESULT)
+    use_limiter(per_client=1, total=10)
+
+    def post(forwarded_for: str) -> int:
+        headers = {"X-Forwarded-For": forwarded_for}
+        return client.post("/v1/analyses", json={"text": PAPER}, headers=headers).status_code
+
+    assert post("1.1.1.1, 9.9.9.9") == 200
+    # A forged entry on the left does not make the same client look new.
+    assert post("2.2.2.2, 9.9.9.9") == 429
+    assert post("2.2.2.2, 8.8.8.8") == 200
