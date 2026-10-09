@@ -4,8 +4,8 @@
 | Field | Value |
 |---|---|
 | Current phase | 1 Local backend (in progress) |
-| Last step done | app/main.py and tests/test_main.py |
-| Next step | Dockerfile, docker run and a real curl |
+| Last step done | Dockerfile, .dockerignore and samples |
+| Next step | Real curl with the three samples, then /checkpoint to close Phase 1 |
 | Blockers | None |
 
 ## Phase 0. Setup (done)
@@ -20,7 +20,7 @@ Done when ruff, mypy and pytest run cleanly on the empty project.
 * [x] app/llm.py with forced tool use, Pydantic validation and one retry that feeds the error back to the model
 * [x] app/main.py with lifespan, /healthz and POST /v1/analyses returning 422, 502 and 503 as appropriate
 * [x] Endpoint tests with a fake LLM via dependency_overrides, and tests for the retry logic
-* [ ] Dockerfile and a local run with docker run
+* [x] Dockerfile and a local run with docker run. The local docker run was skipped; the image is first built and run in Phase 2
 Done when a local curl returns a real summary, the tests pass and the image runs.
 
 ## Phase 2. GCP by hand

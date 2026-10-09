@@ -52,3 +52,7 @@ Trade off. A slow but healthy provider can hit the deadline and return 503 for a
 ## D13. /healthz does not depend on the LLM provider
 Why. It is a liveness check: it only says the process is up and serving. If it called Anthropic, a provider outage would make Cloud Run treat healthy instances as broken and restart them, which fixes nothing and adds cold starts.
 Trade off. A healthy /healthz does not mean analyses work. Provider health shows up in the 503 rate instead.
+
+## D14. Container image
+Why. python:3.12-slim keeps the image small without the build issues of Alpine. Dependencies are installed before the code is copied, so code changes reuse the cached layer. The process runs as a non-root user. uvicorn listens on 0.0.0.0 and on the PORT that Cloud Run sets, and runs through exec so it receives SIGTERM and the lifespan can close the client. .dockerignore keeps .env out of the build context, and the API key is injected at run time (docker run --env-file locally, Secret Manager on Cloud Run).
+Trade off. The base image tag floats on patch releases. Pinning a digest would make builds fully reproducible at the cost of manual updates.
