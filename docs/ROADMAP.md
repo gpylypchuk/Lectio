@@ -4,8 +4,8 @@
 | Field | Value |
 |---|---|
 | Current phase | 1 Local backend (in progress) |
-| Last step done | app/llm.py and tests/test_llm.py (retry logic and error mapping) |
-| Next step | app/main.py with lifespan, /healthz and POST /v1/analyses |
+| Last step done | app/main.py and tests/test_main.py |
+| Next step | Dockerfile, docker run and a real curl |
 | Blockers | None |
 
 ## Phase 0. Setup (done)
@@ -18,8 +18,8 @@ Done when ruff, mypy and pytest run cleanly on the empty project.
 * [x] app/config.py with pydantic settings
 * [x] app/schemas.py with AnalysisRequest, PaperSummary (with a business rule in a model_validator) and AnalysisResult
 * [x] app/llm.py with forced tool use, Pydantic validation and one retry that feeds the error back to the model
-* [ ] app/main.py with lifespan, /healthz and POST /v1/analyses returning 422, 502 and 503 as appropriate
-* [ ] Endpoint tests with a fake LLM via dependency_overrides, and tests for the retry logic
+* [x] app/main.py with lifespan, /healthz and POST /v1/analyses returning 422, 502 and 503 as appropriate
+* [x] Endpoint tests with a fake LLM via dependency_overrides, and tests for the retry logic
 * [ ] Dockerfile and a local run with docker run
 Done when a local curl returns a real summary, the tests pass and the image runs.
 

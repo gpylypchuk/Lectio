@@ -30,7 +30,7 @@ Alternative. On those models, use tool_choice "auto" with the tool named in the 
 Trade off. For those models, changing LLM_MODEL is not only a config change as D6 suggests. llm.py has to change too.
 
 ## D8. Provider error mapping
-Why. The rule is that whatever the SDK retries is transient: timeouts, connection errors, 408, 409, 429 and 5xx (529 included). If they still fail after the SDK retries, they map to 503 and the client can retry later. Any other 4xx (bad request, invalid key, unknown model) is a bug or misconfiguration on our side that a retry will not fix, so it maps to 500 and is logged with the status code, error type, provider request id and model. Classification goes by status code, not exception class, because in the SDK 529 is OverloadedError, which does not inherit from InternalServerError. An invalid LLM answer still maps to 502.
+Why. The rule is that whatever the SDK retries is transient: timeouts, connection errors, 408, 409, 429 and 5xx (529 included). If they still fail after the SDK retries, they map to 503 and the client can retry later. Any other 4xx (bad request, invalid key, unknown model) is a bug or misconfiguration on our side that a retry will not fix, so it maps to 500 and is logged with the status code, error type, provider request id and model. Classification goes by status code, not exception class, because in the SDK 529 is OverloadedError, which does not inherit from InternalServerError. The 503 carries Retry-After: 30, long enough for a rate limit or an overload to clear. An invalid LLM answer still maps to 502.
 Trade off. The client only sees a generic 500. The detail lives in the logs.
 
 ## D9. Text length limits
@@ -48,3 +48,7 @@ Trade off. It is a mitigation, not a guarantee. A crafted paper can still bias t
 ## D12. Two retry layers and an overall deadline
 Why. The SDK retries transport failures (D8) with exponential backoff, and our code retries content failures once (D2). They handle different failures and never overlap: we do not retry provider errors, because the SDK already did. They do multiply: each validation attempt can make 1 + LLM_MAX_RETRIES HTTP requests of up to LLM_TIMEOUT_SECONDS (30 s) each, and the SDK honors retry-after with no practical cap. LLM_DEADLINE_SECONDS (90 s) bounds the whole analysis and maps to 503. It stays below the Cloud Run request timeout (300 s by default) so the client gets a clean 503 instead of a cut connection. max_retries is set explicitly when the client is created so the budget is visible in code.
 Trade off. A slow but healthy provider can hit the deadline and return 503 for a request that would have succeeded.
+
+## D13. /healthz does not depend on the LLM provider
+Why. It is a liveness check: it only says the process is up and serving. If it called Anthropic, a provider outage would make Cloud Run treat healthy instances as broken and restart them, which fixes nothing and adds cold starts.
+Trade off. A healthy /healthz does not mean analyses work. Provider health shows up in the 503 rate instead.
