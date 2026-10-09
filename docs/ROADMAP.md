@@ -3,9 +3,9 @@
 ## Current status
 | Field | Value |
 |---|---|
-| Current phase | 1 Local backend (in progress) |
-| Last step done | Dockerfile, .dockerignore and samples |
-| Next step | Real curl with the three samples, then /checkpoint to close Phase 1 |
+| Current phase | 2 GCP by hand (not started) |
+| Last step done | Real curl with the three samples, Phase 1 closed |
+| Next step | Project, billing and budget alert |
 | Blockers | None |
 
 ## Phase 0. Setup (done)
@@ -14,7 +14,7 @@
 * [x] First commit
 Done when ruff, mypy and pytest run cleanly on the empty project.
 
-## Phase 1. Local backend
+## Phase 1. Local backend (done)
 * [x] app/config.py with pydantic settings
 * [x] app/schemas.py with AnalysisRequest, PaperSummary (with a business rule in a model_validator) and AnalysisResult
 * [x] app/llm.py with forced tool use, Pydantic validation and one retry that feeds the error back to the model
