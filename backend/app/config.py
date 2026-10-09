@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,6 +11,13 @@ class Settings(BaseSettings):
     anthropic_api_key: SecretStr
     # Not a secret, so a safe default saves setting it in every environment.
     llm_model: str = "claude-haiku-4-5-20251001"
+    # Per HTTP request. The SDK default of 600 s is far too long for a synchronous API.
+    llm_timeout_seconds: float = Field(default=30.0, gt=0)
+    # SDK retries on transient errors. Each of our validation attempts can make 1 + this many calls.
+    llm_max_retries: int = Field(default=2, ge=0)
+    # Bounds the whole analysis, because SDK retries honor retry-after with no practical cap.
+    # Keep it below the Cloud Run request timeout so the client gets a clean 503.
+    llm_deadline_seconds: float = Field(default=90.0, gt=0)
 
 
 @lru_cache

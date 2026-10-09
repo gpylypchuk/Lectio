@@ -30,7 +30,7 @@ Alternative. On those models, use tool_choice "auto" with the tool named in the 
 Trade off. For those models, changing LLM_MODEL is not only a config change as D6 suggests. llm.py has to change too.
 
 ## D8. Provider error mapping
-Why. Timeouts, connection errors, 429 and 5xx from the provider are transient, so they map to 503 and the client can retry later. Any other 4xx (bad request, invalid key, unknown model) is a bug or misconfiguration on our side that a retry will not fix, so it maps to 500 and is logged with the status code and the provider request id. An invalid LLM answer still maps to 502.
+Why. The rule is that whatever the SDK retries is transient: timeouts, connection errors, 408, 409, 429 and 5xx (529 included). If they still fail after the SDK retries, they map to 503 and the client can retry later. Any other 4xx (bad request, invalid key, unknown model) is a bug or misconfiguration on our side that a retry will not fix, so it maps to 500 and is logged with the status code, error type, provider request id and model. Classification goes by status code, not exception class, because in the SDK 529 is OverloadedError, which does not inherit from InternalServerError. An invalid LLM answer still maps to 502.
 Trade off. The client only sees a generic 500. The detail lives in the logs.
 
 ## D9. Text length limits
@@ -40,3 +40,11 @@ Trade off. Longer papers get a 422. Supporting them would need chunking or the a
 ## D10. Every rule on LLM output must be satisfiable without inventing data
 Why. A rule that can only pass by adding content pushes the model to make it up, and the retry reinforces it. Every rule needs an honest way out. That is why title is nullable, limitations can be empty, and the only cross-field rule caps confidence: it cannot be high without a title and at least two key findings, and the honest fix is to lower it. The rule is also stated in the field description so the model usually gets it right on the first attempt. Rejected: "empirical requires at least one limitation", which invites invented limitations.
 Trade off. Clients must handle a null title and more low or medium confidence answers.
+
+## D11. Prompt injection defense
+Why. The paper is untrusted input. It goes between <paper> tags, any closing tag inside it is neutralized so it cannot end the block early, and the system prompt says that content inside the tags is data to analyze, never instructions. Forced tool use and Pydantic validation limit the blast radius: the model has no tools with side effects and the only possible output is a PaperSummary.
+Trade off. It is a mitigation, not a guarantee. A crafted paper can still bias the content of its own summary.
+
+## D12. Two retry layers and an overall deadline
+Why. The SDK retries transport failures (D8) with exponential backoff, and our code retries content failures once (D2). They handle different failures and never overlap: we do not retry provider errors, because the SDK already did. They do multiply: each validation attempt can make 1 + LLM_MAX_RETRIES HTTP requests of up to LLM_TIMEOUT_SECONDS (30 s) each, and the SDK honors retry-after with no practical cap. LLM_DEADLINE_SECONDS (90 s) bounds the whole analysis and maps to 503. It stays below the Cloud Run request timeout (300 s by default) so the client gets a clean 503 instead of a cut connection. max_retries is set explicitly when the client is created so the budget is visible in code.
+Trade off. A slow but healthy provider can hit the deadline and return 503 for a request that would have succeeded.
