@@ -56,3 +56,11 @@ Trade off. A healthy /healthz does not mean analyses work. Provider health shows
 ## D14. Container image
 Why. python:3.12-slim keeps the image small without the build issues of Alpine. Dependencies are installed before the code is copied, so code changes reuse the cached layer. The process runs as a non-root user. uvicorn listens on 0.0.0.0 and on the PORT that Cloud Run sets, and runs through exec so it receives SIGTERM and the lifespan can close the client. .dockerignore keeps .env out of the build context, and the API key is injected at run time (docker run --env-file locally, Secret Manager on Cloud Run).
 Trade off. The base image tag floats on patch releases. Pinning a digest would make builds fully reproducible at the cost of manual updates.
+
+## D15. Images are built with Cloud Build
+Why. The development machine is ARM and Cloud Run runs amd64, so a local build would need cross compilation. Cloud Build builds on amd64, the result does not depend on a laptop, and the image goes straight to Artifact Registry in us-central1. .gcloudignore mirrors .dockerignore because the source is uploaded to a Cloud Storage bucket before Docker runs.
+Trade off. Each build uploads the source and waits for a remote worker, which is slower than a cached local build.
+
+## D16. Private service with least privilege and a cost cap
+Why. Every request spends API credits, so the service is deployed with --no-allow-unauthenticated and only identities with run.invoker can call it. It runs as a dedicated service account whose only permission is secretAccessor on the one secret, bound on the secret and not on the project. The secret is pinned to a version, so rotating the key is an explicit deploy that creates a new revision. --max-instances 1 caps the cost.
+Trade off. Callers need an identity token, so a public frontend would need an authenticated layer in front. One instance limits throughput to what a single container can serve.

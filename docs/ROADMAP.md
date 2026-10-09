@@ -3,9 +3,9 @@
 ## Current status
 | Field | Value |
 |---|---|
-| Current phase | 2 GCP by hand (not started) |
-| Last step done | Real curl with the three samples, Phase 1 closed |
-| Next step | Project, billing and budget alert |
+| Current phase | 2 GCP by hand (in progress, reduced scope) |
+| Last step done | Curl with an identity token returned a real summary from Cloud Run |
+| Next step | Read the logs in Cloud Logging. Traffic split and rollback deferred |
 | Blockers | None |
 
 ## Phase 0. Setup (done)
@@ -24,14 +24,15 @@ Done when ruff, mypy and pytest run cleanly on the empty project.
 Done when a local curl returns a real summary, the tests pass and the image runs.
 
 ## Phase 2. GCP by hand
-* [ ] Project, billing and budget alert
-* [ ] Enable the Cloud Run, Artifact Registry, Cloud Build, Secret Manager and Cloud Deploy APIs
-* [ ] Artifact Registry repository and image build with Cloud Build
-* [ ] Secret with the API key in Secret Manager
-* [ ] Dedicated service account for the service, allowed only to read that secret
-* [ ] Cloud Run deploy with the secret exposed as an environment variable
+* [x] Project, billing and budget alert
+* [x] Enable the Cloud Run, Artifact Registry, Cloud Build, Secret Manager and Cloud Deploy APIs. Cloud Deploy deferred to Phase 3
+* [x] Artifact Registry repository and image build with Cloud Build
+* [x] Secret with the API key in Secret Manager
+* [x] Dedicated service account for the service, allowed only to read that secret
+* [x] Cloud Run deploy with the secret exposed as an environment variable
 * [ ] New revision, traffic split between revisions and rollback
 * [ ] Read the logs in Cloud Logging
+* [ ] Rename /healthz to /health. On Cloud Run, /healthz got Google's own 404 and never reached the container
 Done when the public URL responds and every command and flag used can be explained.
 
 ## Phase 3. Cloud Deploy
