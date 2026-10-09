@@ -49,9 +49,9 @@ Trade off. It is a mitigation, not a guarantee. A crafted paper can still bias t
 Why. The SDK retries transport failures (D8) with exponential backoff, and our code retries content failures once (D2). They handle different failures and never overlap: we do not retry provider errors, because the SDK already did. They do multiply: each validation attempt can make 1 + LLM_MAX_RETRIES HTTP requests of up to LLM_TIMEOUT_SECONDS (30 s) each, and the SDK honors retry-after with no practical cap. LLM_DEADLINE_SECONDS (90 s) bounds the whole analysis and maps to 503. It stays below the Cloud Run request timeout (300 s by default) so the client gets a clean 503 instead of a cut connection. max_retries is set explicitly when the client is created so the budget is visible in code.
 Trade off. A slow but healthy provider can hit the deadline and return 503 for a request that would have succeeded.
 
-## D13. /healthz does not depend on the LLM provider
-Why. It is a liveness check: it only says the process is up and serving. If it called Anthropic, a provider outage would make Cloud Run treat healthy instances as broken and restart them, which fixes nothing and adds cold starts.
-Trade off. A healthy /healthz does not mean analyses work. Provider health shows up in the 503 rate instead.
+## D13. /health does not depend on the LLM provider
+Why. It is a liveness check: it only says the process is up and serving. If it called Anthropic, a provider outage would make Cloud Run treat healthy instances as broken and restart them, which fixes nothing and adds cold starts. The path is /health and not /healthz because Cloud Run answered /healthz with its own 404 before the request reached the container.
+Trade off. A healthy /health does not mean analyses work. Provider health shows up in the 503 rate instead.
 
 ## D14. Container image
 Why. python:3.12-slim keeps the image small without the build issues of Alpine. Dependencies are installed before the code is copied, so code changes reuse the cached layer. The process runs as a non-root user. uvicorn listens on 0.0.0.0 and on the PORT that Cloud Run sets, and runs through exec so it receives SIGTERM and the lifespan can close the client. .dockerignore keeps .env out of the build context, and the API key is injected at run time (docker run --env-file locally, Secret Manager on Cloud Run).

@@ -53,8 +53,8 @@ def use_analyzer(outcome: AnalysisResult | Exception) -> FakeAnalyzer:
     return fake
 
 
-def test_healthz(client: TestClient) -> None:
-    response = client.get("/healthz")
+def test_health(client: TestClient) -> None:
+    response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
@@ -114,7 +114,7 @@ def test_lifespan_creates_and_closes_the_analyzer(monkeypatch: pytest.MonkeyPatc
     try:
         with TestClient(app) as client:
             assert isinstance(app.state.analyzer, AnthropicAnalyzer)
-            assert client.get("/healthz").status_code == 200
+            assert client.get("/health").status_code == 200
         assert app.state.analyzer._client.is_closed()
     finally:
         get_settings.cache_clear()

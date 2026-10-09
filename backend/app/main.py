@@ -58,8 +58,9 @@ async def llm_error_handler(request: Request, exc: LLMError) -> JSONResponse:
     return JSONResponse(status_code=status_code, content={"detail": detail}, headers=headers)
 
 
-@app.get("/healthz")
-async def healthz() -> dict[str, str]:
+# Not /healthz: Cloud Run answers it with its own 404 before it reaches the container.
+@app.get("/health")
+async def health() -> dict[str, str]:
     # Liveness only. Calling the LLM here would let a provider outage restart healthy instances.
     return {"status": "ok"}
 

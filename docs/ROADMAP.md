@@ -3,9 +3,9 @@
 ## Current status
 | Field | Value |
 |---|---|
-| Current phase | 5 Optional (minimal frontend) |
-| Last step done | CI green on GitHub. Local React frontend with txt and PDF upload |
-| Next step | Rename /healthz, Cloud Deploy rollback, then Workload Identity Federation |
+| Current phase | 6 Public deployment |
+| Last step done | /healthz renamed to /health |
+| Next step | Serve the frontend from the API container |
 | Blockers | None |
 
 ## Phase 0. Setup (done)
@@ -32,7 +32,7 @@ Done when a local curl returns a real summary, the tests pass and the image runs
 * [x] Cloud Run deploy with the secret exposed as an environment variable
 * [x] New revision, traffic split between revisions and rollback
 * [x] Read the logs in Cloud Logging
-* [ ] Rename /healthz to /health. On Cloud Run, /healthz got Google's own 404 and never reached the container
+* [x] Rename /healthz to /health. On Cloud Run, /healthz got Google's own 404 and never reached the container
 Done when the public URL responds and every command and flag used can be explained.
 
 ## Phase 3. Cloud Deploy
@@ -50,6 +50,17 @@ Done when CI is green.
 ## Phase 5. Optional
 Only once everything above is done. A minimal React frontend, or async processing with Pub/Sub.
 * [x] Local React frontend in frontend/. Vite proxies /v1 to port 8080, and PDF text is extracted in the browser with pdf.js
+
+## Phase 6. Public deployment
+Keep the app running publicly at near zero idle cost, with the LLM spend capped.
+* [x] Rename /healthz to /health
+* [ ] Serve the built frontend from the API container with a multi-stage Dockerfile
+* [ ] Per IP rate limiting in the app and a lower containerConcurrency
+* [ ] Monthly spend limit in the Anthropic Console
+* [ ] Public lectio-prod with allUsers as run.invoker, recorded as a decision that supersedes D16
+* [ ] Delete lectio-api and add an Artifact Registry cleanup policy
+* [ ] Optional. Release on push with Workload Identity Federation, and a Cloud Deploy rollback
+Done when the public URL serves the frontend and a burst of requests gets 429.
 
 ## Out of scope
 Cloud SQL, Pub/Sub with a worker and Terraform. See `docs/ARCHITECTURE.md` for how they would fit.
