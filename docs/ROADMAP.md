@@ -3,9 +3,9 @@
 ## Current status
 | Field | Value |
 |---|---|
-| Current phase | 2 GCP by hand (in progress, reduced scope) |
-| Last step done | Curl with an identity token returned a real summary from Cloud Run |
-| Next step | Read the logs in Cloud Logging. Traffic split and rollback deferred |
+| Current phase | 2 GCP by hand (done except the /healthz rename) |
+| Last step done | Revision 00002 tagged candidate, 50/50 split and rollback to 00001 |
+| Next step | Rename /healthz to /health, then Phase 3 Cloud Deploy |
 | Blockers | None |
 
 ## Phase 0. Setup (done)
@@ -30,8 +30,8 @@ Done when a local curl returns a real summary, the tests pass and the image runs
 * [x] Secret with the API key in Secret Manager
 * [x] Dedicated service account for the service, allowed only to read that secret
 * [x] Cloud Run deploy with the secret exposed as an environment variable
-* [ ] New revision, traffic split between revisions and rollback
-* [ ] Read the logs in Cloud Logging
+* [x] New revision, traffic split between revisions and rollback
+* [x] Read the logs in Cloud Logging
 * [ ] Rename /healthz to /health. On Cloud Run, /healthz got Google's own 404 and never reached the container
 Done when the public URL responds and every command and flag used can be explained.
 
