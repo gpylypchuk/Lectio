@@ -4,8 +4,8 @@
 | Field | Value |
 |---|---|
 | Current phase | 6 Public deployment |
-| Last step done | /healthz renamed to /health |
-| Next step | Serve the frontend from the API container |
+| Last step done | Frontend served from the API container (D18), image built and checked locally |
+| Next step | Per IP rate limiting and a lower containerConcurrency |
 | Blockers | None |
 
 ## Phase 0. Setup (done)
@@ -54,7 +54,7 @@ Only once everything above is done. A minimal React frontend, or async processin
 ## Phase 6. Public deployment
 Keep the app running publicly at near zero idle cost, with the LLM spend capped.
 * [x] Rename /healthz to /health
-* [ ] Serve the built frontend from the API container with a multi-stage Dockerfile
+* [x] Serve the built frontend from the API container with a multi-stage Dockerfile
 * [ ] Per IP rate limiting in the app and a lower containerConcurrency
 * [ ] Monthly spend limit in the Anthropic Console
 * [ ] Public lectio-prod with allUsers as run.invoker, recorded as a decision that supersedes D16

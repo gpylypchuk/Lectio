@@ -1,9 +1,11 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.llm import (
@@ -18,6 +20,9 @@ from app.schemas import AnalysisRequest, AnalysisResult
 
 # Long enough for a rate limit or an overload to clear on the provider side (D8).
 RETRY_AFTER_SECONDS = 30
+
+# Only the container image has the built frontend here. Locally Vite serves it (D18).
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "static"
 
 # Client-facing status and message per domain error. The details stay in the logs (D8).
 ERROR_RESPONSES: dict[type[LLMError], tuple[int, str]] = {
@@ -68,3 +73,12 @@ async def health() -> dict[str, str]:
 @app.post("/v1/analyses")
 async def create_analysis(body: AnalysisRequest, analyzer: AnalyzerDep) -> AnalysisResult:
     return await analyzer.analyze(body.text)
+
+
+def mount_frontend(app: FastAPI, directory: Path) -> None:
+    # A mount at / matches every path, so it must come after all API routes.
+    app.mount("/", StaticFiles(directory=directory, html=True), name="frontend")
+
+
+if FRONTEND_DIR.is_dir():
+    mount_frontend(app, FRONTEND_DIR)

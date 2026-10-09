@@ -1,0 +1,23 @@
+# Secrets never enter the build context. The API key is passed at run time.
+# Docker anchors patterns at the context root, hence **/ for files at any depth.
+**/.env
+**/.env.*
+
+**/.venv
+**/node_modules
+**/dist
+**/__pycache__
+**/*.pyc
+**/.mypy_cache
+**/.pytest_cache
+**/.ruff_cache
+**/.DS_Store
+
+.git
+.claude
+CLAUDE.local.md
+study
+docs
+deploy
+backend/tests
+backend/samples

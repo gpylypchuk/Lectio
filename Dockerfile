@@ -1,3 +1,16 @@
+# Stage 1 builds the React frontend. Only its static output reaches the final image.
+FROM node:22-slim AS frontend
+
+WORKDIR /frontend
+
+# Same layer caching as the Python dependencies below.
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+COPY frontend ./
+RUN npm run build
+
+# Stage 2 is the API, which also serves the built frontend.
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -8,10 +21,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Dependencies first, so this layer stays cached until requirements.txt changes.
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY app ./app
+COPY backend/app ./app
+# app/main.py mounts this directory at / when it exists.
+COPY --from=frontend /frontend/dist ./static
 
 RUN useradd --system --no-create-home appuser
 USER appuser

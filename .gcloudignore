@@ -1,0 +1,24 @@
+# Sources are uploaded to a Cloud Storage bucket before the build, so secrets are excluded here too.
+# Same list as .dockerignore. Patterns without a slash match at any depth, as in .gitignore.
+.gcloudignore
+.env
+.env.*
+
+.venv
+node_modules
+dist
+__pycache__
+*.pyc
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.DS_Store
+
+.git
+.claude
+CLAUDE.local.md
+study/
+docs/
+deploy/
+backend/tests/
+backend/samples/

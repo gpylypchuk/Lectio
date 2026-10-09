@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -11,7 +12,7 @@ from app.llm import (
     ProviderRequestError,
     ProviderUnavailableError,
 )
-from app.main import app, get_analyzer
+from app.main import app, get_analyzer, mount_frontend
 from app.schemas import AnalysisResult, PaperSummary
 
 PAPER = "Sleep and memory. " * 40
@@ -45,6 +46,15 @@ def client() -> Iterator[TestClient]:
     # No "with" block, so the real lifespan does not run and no API key is needed.
     yield TestClient(app)
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def frontend(tmp_path: Path) -> Iterator[None]:
+    (tmp_path / "index.html").write_text("<title>Lectio</title>")
+    mount_frontend(app, tmp_path)
+    yield
+    # The mount is the last route, so popping it restores the app for other tests.
+    app.router.routes.pop()
 
 
 def use_analyzer(outcome: AnalysisResult | Exception) -> FakeAnalyzer:
@@ -118,3 +128,19 @@ def test_lifespan_creates_and_closes_the_analyzer(monkeypatch: pytest.MonkeyPatc
         assert app.state.analyzer._client.is_closed()
     finally:
         get_settings.cache_clear()
+
+
+@pytest.mark.usefixtures("frontend")
+def test_frontend_is_served_at_root(client: TestClient) -> None:
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "<title>Lectio</title>" in response.text
+
+
+@pytest.mark.usefixtures("frontend")
+def test_frontend_does_not_shadow_the_api(client: TestClient) -> None:
+    use_analyzer(RESULT)
+
+    assert client.get("/health").json() == {"status": "ok"}
+    assert client.post("/v1/analyses", json={"text": PAPER}).status_code == 200
