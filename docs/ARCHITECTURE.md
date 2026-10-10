@@ -1,19 +1,25 @@
 # Architecture
 
-## Today
-Client → Cloud Run (FastAPI) → Anthropic API.
-The API key lives in Secret Manager and Cloud Run injects it as an environment variable. Images are stored in Artifact Registry. Cloud Deploy promotes versions from dev to prod with an approval.
+## Current
+Browser → Cloud Run (FastAPI serving the React build and `/v1`) → Anthropic API
 
-Request flow
-1. The client sends the text to POST /v1/analyses.
-2. Pydantic validates the body. If it is invalid, 422.
-3. The LLM is called with a forced tool whose schema is generated from PaperSummary.
-4. Pydantic validates the LLM output, including the business rule. If it fails, one retry with the error as context.
-5. If it fails again, 502. If the provider does not respond, 503. If everything is fine, 200 with the summary.
+* Secret Manager holds the API key, injected as an environment variable.
+* Cloud Build builds the image and pushes it to Artifact Registry.
+* Cloud Deploy promotes releases from lectio-dev (private) to lectio-prod (public, approval required).
+* GitHub Actions runs ruff, mypy and pytest on every push.
 
-## How it would scale
-* Async processing. POST returns 202 with an id, a message is published to Pub/Sub and a worker in a separate Cloud Run service processes it. Idempotency by id and a dead letter topic.
-* Persistence. Cloud SQL (Postgres) with SQLAlchemy and Alembic to store analyses and history.
-* Infrastructure as code. Everything from phase 2 in Terraform, with the state in a Cloud Storage bucket.
-* LLM quality. An eval set that runs in CI on every prompt or model change.
-* Cost and latency. Cache by text hash and a small model by default.
+### Request flow
+1. `POST /v1/analyses` with the paper text. Pydantic validates it, or 422.
+2. The rate limiter checks the per IP and total quotas, or 429.
+3. The LLM is called with a forced tool generated from PaperSummary.
+4. The output is validated, with one retry on failure, or 502.
+5. Provider failures after SDK retries return 503. Success returns 200 with the summary.
+
+## Scaling path
+* Async processing: POST returns 202, Pub/Sub, a worker service, idempotency by id and a dead letter topic.
+* Shared rate limiting with Memorystore or Cloud Armor once there is more than one instance.
+* Frontend on a CDN, deployed independently.
+* Persistence with Cloud SQL, SQLAlchemy and Alembic.
+* Infrastructure as code with Terraform and remote state in Cloud Storage.
+* An eval set in CI for prompt and model changes.
+* A cache keyed by text hash.

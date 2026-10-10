@@ -6,3 +6,6 @@ __pycache__
 .ruff_cache
 CLAUDE.local.md
 study/
+
+# Kept locally, not published
+docs/DECISIONS.md

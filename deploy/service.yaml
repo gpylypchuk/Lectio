@@ -7,7 +7,7 @@ spec:
   template:
     metadata:
       annotations:
-        # Caps cost, and the in-memory rate limiter is only correct with one instance (D19).
+        # Caps cost, and the in-memory rate limiter is only correct with one instance.
         autoscaling.knative.dev/maxScale: "1"
     spec:
       serviceAccountName: lectio-run@lectio-gero-2026.iam.gserviceaccount.com

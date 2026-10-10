@@ -19,11 +19,11 @@ from app.schemas import AnalysisResult, PaperSummary
 logger = logging.getLogger(__name__)
 
 TOOL_NAME = "record_summary"
-# The first answer plus one retry that feeds the validation error back (D2).
+# The first answer plus one retry that feeds the validation error back.
 MAX_ATTEMPTS = 2
 # The schema already bounds the summary length, so this only guards against runaway output.
 MAX_TOKENS = 4096
-# Below 500, these are the codes the SDK retries itself, so a failure here is transient (D8).
+# Below 500, these are the codes the SDK retries itself, so a failure here is transient.
 TRANSIENT_STATUS_CODES = frozenset({408, 409, 429})
 
 SYSTEM_PROMPT = (

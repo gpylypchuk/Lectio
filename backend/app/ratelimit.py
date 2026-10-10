@@ -13,7 +13,7 @@ class RateLimitExceededError(Exception):
 
 
 class RateLimiter:
-    """Sliding window with a cap per client and a cap for everyone (D19).
+    """Sliding window with a cap per client and a cap for everyone.
 
     State lives in memory, so the caps only hold while the service runs a single instance.
     """
@@ -50,7 +50,7 @@ class RateLimiter:
 
 def client_ip(request: Request) -> str:
     # Google's front end appends the address it saw, so the last entry is the one a client
-    # cannot forge. Anything before it may come from the client (D19).
+    # cannot forge. Anything before it may come from the client.
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
         return forwarded.split(",")[-1].strip()

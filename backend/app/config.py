@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # Bounds the whole analysis, because SDK retries honor retry-after with no practical cap.
     # Keep it below the Cloud Run request timeout so the client gets a clean 503.
     llm_deadline_seconds: float = Field(default=90.0, gt=0)
-    # Abuse protection for the public service. Every accepted analysis spends API credits (D19).
+    # Abuse protection for the public service. Every accepted analysis spends API credits.
     rate_limit_per_ip: int = Field(default=5, ge=1)
     rate_limit_total: int = Field(default=30, ge=1)
     rate_limit_window_seconds: float = Field(default=3600.0, gt=0)

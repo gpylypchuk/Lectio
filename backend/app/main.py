@@ -23,13 +23,13 @@ from app.schemas import AnalysisRequest, AnalysisResult
 
 logger = logging.getLogger(__name__)
 
-# Long enough for a rate limit or an overload to clear on the provider side (D8).
+# Long enough for a rate limit or an overload to clear on the provider side.
 RETRY_AFTER_SECONDS = 30
 
-# Only the container image has the built frontend here. Locally Vite serves it (D18).
+# Only the container image has the built frontend here. Locally Vite serves it.
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "static"
 
-# Client-facing status and message per domain error. The details stay in the logs (D8).
+# Client-facing status and message per domain error. The details stay in the logs.
 ERROR_RESPONSES: dict[type[LLMError], tuple[int, str]] = {
     ProviderUnavailableError: (503, "LLM provider unavailable, try again later."),
     InvalidLLMOutputError: (502, "The LLM did not return a valid summary."),
@@ -84,7 +84,7 @@ async def llm_error_handler(request: Request, exc: LLMError) -> JSONResponse:
 
 @app.exception_handler(RateLimitExceededError)
 async def rate_limit_handler(request: Request, exc: RateLimitExceededError) -> JSONResponse:
-    # The client key is logged to check on Cloud Run that X-Forwarded-For is parsed right (D19).
+    # Shows in Cloud Logging who hits the limit and whether X-Forwarded-For is parsed right.
     logger.warning("Rate limit hit by %s", client_ip(request))
     minutes = math.ceil(exc.retry_after_seconds / 60)
     return JSONResponse(
