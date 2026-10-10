@@ -3,9 +3,9 @@
 ## Current status
 | Field | Value |
 |---|---|
-| Current phase | 6 Public deployment |
-| Last step done | lectio-prod public |
-| Next step | Delete lectio-api and apply the Artifact Registry cleanup policy |
+| Current phase | 6 Public deployment (done) |
+| Last step done | lectio-api deleted and Artifact Registry cleanup policy applied |
+| Next step | None. Backlog items are optional |
 | Blockers | None |
 
 ## Completed
@@ -20,7 +20,7 @@
 * [x] Rate limiting per IP and in total
 * [x] Spend limit of 5 USD per month in the Anthropic Console
 * [x] Public lectio-prod
-* [ ] Delete lectio-api and apply the Artifact Registry cleanup policy
+* [x] Delete lectio-api and apply the Artifact Registry cleanup policy
 
 ## Backlog
 * Release on push to main with Workload Identity Federation.
